@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
         console.log("game state updated", gameState);
         io.emit("updateGameState", gameState);
     });
-    socket.on("restartGameRequest", () => {
+    socket.on("restartGameRequest", (g) => {
         resetGameState(gameState);
         io.emit("restartGame", gameState);
     });
