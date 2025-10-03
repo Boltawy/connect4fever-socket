@@ -2,12 +2,12 @@ import express from "express";
 import { Server, Socket } from "socket.io";
 const app = express();
 import cors from "cors";
-import { GameStatus, socketEvents } from "./types.js";
+import { GameStatus, socketEvents, } from "./types.js";
 app.use(express.json());
 app.use(cors());
 // Routes
 app.get("/", (req, res) => res.json("Hello World!"));
-const server = app.listen(process.env.PORT || 3000, () => console.log(`Connect4Fever API listening on port ${process.env.PORT || 3000}.`));
+const server = app.listen(process.env.PORT || 3000, () => console.log(`Connect4Fever Socket Server listening on port ${process.env.PORT || 3000}.`));
 const io = new Server(server, {
     cors: {
         origin: [
@@ -83,6 +83,17 @@ io.on("connection", (socket) => {
         }
         const newGameState = resetGameState(gameState);
         io.emit(socketEvents.UPDATE_GAME_STATE, newGameState);
+    });
+    socket.on(socketEvents.PLAY_DISC_SOUND, (roomId) => {
+        socket.broadcast.to(roomId).emit(socketEvents.PLAY_DISC_SOUND);
+    });
+    socket.on(socketEvents.RED_WINS, (roomId) => {
+        console.log("red wins");
+        socket.broadcast.to(roomId).emit(socketEvents.RED_WINS);
+    });
+    socket.on(socketEvents.YELLOW_WINS, (roomId) => {
+        console.log("yellow wins");
+        socket.broadcast.to(roomId).emit(socketEvents.YELLOW_WINS);
     });
 });
 const resetGameState = (gameState) => {

@@ -24,5 +24,8 @@ export var socketEvents;
     socketEvents["JOIN_ROOM_RESPONSE"] = "joinRoomResponse";
     socketEvents["UPDATE_GAME_STATE"] = "updateGameState";
     socketEvents["RESTART_GAME"] = "restartGame";
+    socketEvents["PLAY_DISC_SOUND"] = "playDiscSound";
+    socketEvents["RED_WINS"] = "redWins";
+    socketEvents["YELLOW_WINS"] = "yellowWins";
 })(socketEvents || (socketEvents = {}));
 //# sourceMappingURL=types.js.map

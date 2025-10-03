@@ -33,6 +33,9 @@ export declare enum socketEvents {
     JOIN_ROOM_REQUEST = "joinRoomRequest",
     JOIN_ROOM_RESPONSE = "joinRoomResponse",
     UPDATE_GAME_STATE = "updateGameState",
-    RESTART_GAME = "restartGame"
+    RESTART_GAME = "restartGame",
+    PLAY_DISC_SOUND = "playDiscSound",
+    RED_WINS = "redWins",
+    YELLOW_WINS = "yellowWins"
 }
 //# sourceMappingURL=types.d.ts.map

@@ -3,7 +3,12 @@ import { Server, Socket } from "socket.io";
 
 const app = express();
 import cors from "cors";
-import { GameStatus, socketEvents, type IGameState, type IMultiplayerGameState } from "./types.js";
+import {
+  GameStatus,
+  socketEvents,
+  type IGameState,
+  type IMultiplayerGameState,
+} from "./types.js";
 
 app.use(express.json());
 app.use(cors());
@@ -83,18 +88,24 @@ io.on("connection", (socket: Socket) => {
     io.to(roomId).emit(socketEvents.JOIN_ROOM_RESPONSE, gameInstance);
   });
 
-  socket.on(socketEvents.UPDATE_GAME_STATE, (gameState: IMultiplayerGameState) => {
-    console.log("update game state request recieved on room ", gameState.roomId);
-    const room = rooms.find((game) => game.roomId === gameState.roomId);
-    if (!room) {
-      console.log("room not found");
-      return;
-    }
-    Object.assign(room, gameState);
+  socket.on(
+    socketEvents.UPDATE_GAME_STATE,
+    (gameState: IMultiplayerGameState) => {
+      console.log(
+        "update game state request recieved on room ",
+        gameState.roomId
+      );
+      const room = rooms.find((game) => game.roomId === gameState.roomId);
+      if (!room) {
+        console.log("room not found");
+        return;
+      }
+      Object.assign(room, gameState);
 
-    console.log("game state updated", room);
-    io.emit(socketEvents.UPDATE_GAME_STATE, room);
-  });
+      console.log("game state updated", room);
+      io.emit(socketEvents.UPDATE_GAME_STATE, room);
+    }
+  );
   socket.on(socketEvents.RESTART_GAME, (roomId: string) => {
     const gameState = rooms.find((game) => game.roomId === roomId);
     if (!gameState) {
@@ -104,9 +115,22 @@ io.on("connection", (socket: Socket) => {
     const newGameState = resetGameState(gameState!);
     io.emit(socketEvents.UPDATE_GAME_STATE, newGameState);
   });
+  socket.on(socketEvents.PLAY_DISC_SOUND, (roomId: string) => {
+    socket.broadcast.to(roomId).emit(socketEvents.PLAY_DISC_SOUND);
+  });
+  socket.on(socketEvents.RED_WINS, (roomId: string) => {
+    console.log("red wins");
+    socket.broadcast.to(roomId).emit(socketEvents.RED_WINS);
+  });
+  socket.on(socketEvents.YELLOW_WINS, (roomId: string) => {
+    console.log("yellow wins");
+    socket.broadcast.to(roomId).emit(socketEvents.YELLOW_WINS);
+  });
 });
 
-const resetGameState = (gameState: IMultiplayerGameState): IMultiplayerGameState => {
+const resetGameState = (
+  gameState: IMultiplayerGameState
+): IMultiplayerGameState => {
   return {
     boardArray: Array(42).fill("empty"),
     diskPointerArray: [35, 36, 37, 38, 39, 40, 41],

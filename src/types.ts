@@ -27,7 +27,7 @@ export interface IMultiplayerGameState extends IGameState {
   gameStatus: GameStatus;
 }
 
-export enum socketEvents {
+export enum socketEvents { // should define both name & payload, Probably a "wrapper" function
   CONNECT = 'connect',
   DISCONNECT = 'disconnect',
   GET_ROOMS_REQUEST = 'getRoomsRequest',
@@ -38,4 +38,7 @@ export enum socketEvents {
   JOIN_ROOM_RESPONSE = 'joinRoomResponse',
   UPDATE_GAME_STATE = 'updateGameState',
   RESTART_GAME = 'restartGame',
+  PLAY_DISC_SOUND = 'playDiscSound',
+  RED_WINS = 'redWins',
+  YELLOW_WINS = 'yellowWins'
 }
