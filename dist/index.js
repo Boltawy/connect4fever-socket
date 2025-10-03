@@ -1,7 +1,8 @@
 import express from "express";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 const app = express();
 import cors from "cors";
+import { GameStatus, socketEvents } from "./types.js";
 app.use(express.json());
 app.use(cors());
 // Routes
@@ -18,42 +19,82 @@ const io = new Server(server, {
         // credentials: true
     },
 });
-let gameState = {
-    board: Array(42).fill("empty"),
-    diskPointerArray: [35, 36, 37, 38, 39, 40, 41],
-    gameStatus: "playing",
-    winner: null,
+let rooms = [];
+const createGameInstance = (player1Id, player2Id) => {
+    const newGame = {
+        boardArray: Array(42).fill("empty"),
+        diskPointerArray: [35, 36, 37, 38, 39, 40, 41],
+        playerTurn: "red",
+        player1Id: player1Id,
+        player2Id: player2Id || "",
+        gameStatus: GameStatus.NOT_STARTED,
+        winner: null,
+        roomId: Math.floor(Math.random() * 10000).toString(),
+        redTurn: true,
+        timer: 20,
+    };
+    rooms.push(newGame);
+    return newGame;
 };
 io.on("connection", (socket) => {
-    console.log("a user connected");
-    // socket.on("createRoom", () => {
-    //     // const gameInstance = createGameInstance()
-    //     // socket.emit("roomCreated", gameInstance)
-    //     socket.join(gameInstance.roomId)
-    // })
-    socket.on("updateBoardRequest", (boardArray) => {
-        io.emit("updateBoard", boardArray);
-        console.log("board updated  ");
+    console.log(`user with id ${socket.id} connected`);
+    socket.on("disconnect", () => {
+        console.log(`user with id ${socket.id} disconnected`);
+        rooms = rooms.filter((game) => game.player1Id !== socket.id);
+        io.emit("getRoomsResponse", rooms);
     });
-    socket.on("updatePointerArrayRequest", (pointerArray) => {
-        io.emit("updatePointerArray", pointerArray);
-        console.log("pointer array updated  ");
+    socket.on(socketEvents.CREATE_ROOM_REQUEST, () => {
+        console.log("create room request");
+        const gameInstance = createGameInstance(socket.id);
+        socket.emit(socketEvents.CREATE_ROOM_RESPONSE, gameInstance);
+        io.emit(socketEvents.GET_ROOMS_RESPONSE, rooms);
+        socket.join(gameInstance.roomId);
     });
-    socket.on("updateGameStateRequest", (gameState) => {
-        console.log("game state updated", gameState);
-        io.emit("updateGameState", gameState);
+    socket.on(socketEvents.GET_ROOMS_REQUEST, () => {
+        socket.emit(socketEvents.GET_ROOMS_RESPONSE, rooms);
     });
-    socket.on("restartGameRequest", (g) => {
-        resetGameState(gameState);
-        io.emit("restartGame", gameState);
+    socket.on(socketEvents.JOIN_ROOM_REQUEST, (roomId) => {
+        console.log("join room request recieved on room ", roomId);
+        const gameInstance = rooms.find((game) => game.roomId === roomId);
+        if (!gameInstance) {
+            socket.emit(socketEvents.JOIN_ROOM_RESPONSE, "Room not found");
+            return;
+        }
+        socket.join(gameInstance.roomId);
+        gameInstance.player2Id = socket.id;
+        io.to(roomId).emit(socketEvents.JOIN_ROOM_RESPONSE, gameInstance);
+    });
+    socket.on(socketEvents.UPDATE_GAME_STATE, (gameState) => {
+        console.log("update game state request recieved on room ", gameState.roomId);
+        const room = rooms.find((game) => game.roomId === gameState.roomId);
+        if (!room) {
+            console.log("room not found");
+            return;
+        }
+        Object.assign(room, gameState);
+        console.log("game state updated", room);
+        io.emit(socketEvents.UPDATE_GAME_STATE, room);
+    });
+    socket.on(socketEvents.RESTART_GAME, (roomId) => {
+        const gameState = rooms.find((game) => game.roomId === roomId);
+        if (!gameState) {
+            console.log("game not found");
+            return;
+        }
+        const newGameState = resetGameState(gameState);
+        io.emit(socketEvents.UPDATE_GAME_STATE, newGameState);
     });
 });
 const resetGameState = (gameState) => {
-    gameState = {
-        board: Array(42).fill("empty"),
+    return {
+        boardArray: Array(42).fill("empty"),
         diskPointerArray: [35, 36, 37, 38, 39, 40, 41],
-        gameStatus: "playing",
-        winner: null,
+        redTurn: true,
+        player1Id: gameState.player1Id,
+        player2Id: gameState.player2Id,
+        gameStatus: GameStatus.IN_PROGRESS,
+        roomId: gameState.roomId,
+        timer: 20,
     };
 };
 //# sourceMappingURL=index.js.map
