@@ -13,7 +13,7 @@ app.get("/", (req, res) => res.json("Hello World!"));
 
 const server = app.listen(process.env.PORT || 3000, () =>
   console.log(
-    `Connect4Fever API listening on port ${process.env.PORT || 3000}.`
+    `Connect4Fever Socket Server listening on port ${process.env.PORT || 3000}.`
   )
 );
 
